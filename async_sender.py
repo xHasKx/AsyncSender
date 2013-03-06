@@ -573,11 +573,16 @@ class AsyncSender(Frame):
 		self.log("Connected to %s:%s" % sock.addr)
 	
 	def on_exception(self, sock, exc):
-		if type(exc) == socket.gaierror:
-			self.log("Socket exception: %s" % exc)
-		else:
+		try:
 			raise exc
-		print self.is_connected
+		except socket.gaierror:
+			self.log("Socket exception: %s" % exc)
+		except socket.error:
+			if os.name == "nt":
+				# windows error
+				self.log("Socket exception: %s" % unicode(str(exc), "cp1251"))
+			else:
+				self.log("Socket exception: %s" % exc)
 		if self.is_connected:
 			if self.async_socket.is_closed() == self.is_connected:
 				self.is_connected = False
